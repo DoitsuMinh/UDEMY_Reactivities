@@ -9,28 +9,28 @@ using Persistence;
 
 namespace API.Extension
 {
-  public static class ApplicationServiceExtensions
-  {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration config)
+    public static class ApplicationServiceExtensions
     {
-      services.AddEndpointsApiExplorer();
-      services.AddDbContext<DataContext>(opt =>
-      {
-        opt.UseSqlite(config.GetConnectionString("DefaultConnection"));
-      });
-
-      services.AddCors(opt =>
-      {
-        opt.AddPolicy("CorsPolicy", policy =>
+        public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration config)
         {
-          policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
-        });
-      });
+            services.AddEndpointsApiExplorer();
+            services.AddDbContext<DataContext>(opt =>
+            {
+                opt.UseSqlite(config.GetConnectionString("DefaultConnection"));
+            });
 
-      services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(List.Handler).Assembly));
-      services.AddAutoMapper(typeof(MappingProfiles).Assembly);
+            services.AddCors(opt =>
+            {
+                opt.AddPolicy("CorsPolicy", policy =>
+                {
+                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
+                });
+            });
 
-      return services;
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(List.Handler).Assembly));
+            services.AddAutoMapper(typeof(MappingProfiles).Assembly);
+
+            return services;
+        }
     }
-  }
 }
