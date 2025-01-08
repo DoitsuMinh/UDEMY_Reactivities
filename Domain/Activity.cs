@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Domain
 {
     public class Activity
@@ -9,5 +11,6 @@ namespace Domain
         public string Category { get; set; }
         public string City { get; set; }
         public string Venue { get; set; }
+        public string Status { get; set; } = "current";
     }
 }

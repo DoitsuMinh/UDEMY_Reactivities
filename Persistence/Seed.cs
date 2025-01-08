@@ -18,6 +18,7 @@ namespace Persistence
                      Category = "drinks",
                      City = "London",
                      Venue = "Pub",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -27,6 +28,7 @@ namespace Persistence
                      Category = "culture",
                      City = "Paris",
                      Venue = "Louvre",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -36,6 +38,7 @@ namespace Persistence
                      Category = "culture",
                      City = "London",
                      Venue = "Natural History Museum",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -45,6 +48,7 @@ namespace Persistence
                      Category = "music",
                      City = "London",
                      Venue = "O2 Arena",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -54,6 +58,7 @@ namespace Persistence
                      Category = "drinks",
                      City = "London",
                      Venue = "Another pub",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -63,6 +68,7 @@ namespace Persistence
                      Category = "drinks",
                      City = "London",
                      Venue = "Yet another pub",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -72,6 +78,7 @@ namespace Persistence
                      Category = "drinks",
                      City = "London",
                      Venue = "Just another pub",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -81,6 +88,7 @@ namespace Persistence
                      Category = "music",
                      City = "London",
                      Venue = "Roundhouse Camden",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -90,6 +98,7 @@ namespace Persistence
                      Category = "travel",
                      City = "London",
                      Venue = "Somewhere on the Thames",
+                     Status = "current"
                  },
                  new Activity
                  {
@@ -99,6 +108,7 @@ namespace Persistence
                      Category = "film",
                      City = "London",
                      Venue = "Cinema",
+                     Status = "current"
                  }
              };
 

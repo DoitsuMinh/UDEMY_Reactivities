@@ -1,8 +1,6 @@
 using Application.Activities;
 using Domain;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Persistence;
 
 namespace API.Controllers
 {
@@ -23,22 +21,26 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateActivity(Activity activity)
         {
+            if (activity.ID == Guid.Empty)
+            {
+                activity.ID = Guid.NewGuid();
+            }
             await Mediator.Send(new Create.Command { Activity = activity });
             return Ok();
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditActivity(Guid Id, Activity activity)
+        public async Task<IActionResult> EditActivity(string Id, Activity activity)
         {
-            activity.ID = Id;
+            activity.ID = Guid.Parse(Id);
             await Mediator.Send(new Edit.Command { Activity = activity });
             return Ok();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteActivity(Guid Id)
+        public async Task<IActionResult> DeleteActivity(string Id)
         {
-            await Mediator.Send(new Delete.Command { Id = Id });
+            await Mediator.Send(new Delete.Command { Id = Guid.Parse(Id) });
             return Ok();
         }
     }

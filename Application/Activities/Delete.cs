@@ -21,7 +21,11 @@ namespace Application.Activities
             public async Task Handle(Command request, CancellationToken cancellationToken)
             {
                 var activity = await _context.Activities.FindAsync(request.Id);
-                _context.Remove(activity);
+                if (activity is not null)
+                {
+                    activity.Status = "removed";
+                }
+                
                 if (_context.ChangeTracker.HasChanges()) await _context.SaveChangesAsync();
             }
         }
