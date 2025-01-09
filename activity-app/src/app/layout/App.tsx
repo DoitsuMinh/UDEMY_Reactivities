@@ -6,42 +6,21 @@ import ActivityDashboard from "../feature/activities/dashboard/ActivityDashboard
 import { v4 as uuid } from "uuid";
 import agent from "../api/agent";
 import LoadingComponent from "./LoadingComponent";
+import { useStore } from "../stores/store";
+import { observer } from "mobx-react-lite";
 
 function App() {
+  const { activityStore } = useStore();
+
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | undefined>(undefined);
   const [editMode, setEditMode] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   // using StrictMode will cause the app to render twice
   useEffect(() => {
-    agent.Activities.list().then((res) => {
-      let activities: Activity[] = [];
-
-      res.forEach((activity) => {
-        activity.date = activity.date.split("T")[0];
-        activities.push(activity);
-      });
-
-      console.log("here");
-      setActivities(activities);
-      setLoading(false);
-    });
-  }, []);
-
-  function handleSelectActivity(id: string) {
-    setSelectedActivity(activities.find((x) => x.id === id));
-  }
-
-  function handleCancelSelectActivity() {
-    setSelectedActivity(undefined);
-  }
-
-  function handleFormOpen(id?: string) {
-    id ? handleSelectActivity(id) : handleCancelSelectActivity();
-    setEditMode(true);
-  }
+    activityStore.loadActivities();
+  }, [activityStore]);
 
   function handleCreateOrEditActivity(activity: Activity) {
     setSubmitting(true);
@@ -56,7 +35,7 @@ function App() {
     } else {
       activity.id = uuid();
       agent.Activities.create(activity).then(() => {
-        setActivities([...activities, activity]);
+        setActivities([activity, ...activities]);
         setSelectedActivity(activity);
         setEditMode(false);
         setSubmitting(false);
@@ -69,30 +48,36 @@ function App() {
 
     if (id) {
       agent.Activities.delete(id).then(() => {
-        setActivities([...activities.filter((x) => x.id !== id)]);
+        // remove the activity from the list
+        //setActivities([...activities.filter((x) => x.id !== id)]);
+
+        // update the status of the activity to "removed"
+        setActivities([...activities.map((x) => (x.id === id ? { ...x, status: "removed" } : x))]);
         setSubmitting(false);
       });
     }
   }
-
-  function handleFormClose() {
-    setEditMode(false);
-  }
-
-  if (loading) return <LoadingComponent content="Loading" />;
+  // {
+  //   /* <Grid>
+  //         <Grid.Column width="10">
+  //           <h2>{activityStore.title}</h2>
+  //           <Button
+  //             content="Add monkey"
+  //             style={{ marginBottom: "1em" }}
+  //             positive
+  //             onClick={() => activityStore.setTitle()}
+  //           />
+  //         </Grid.Column>
+  //       </Grid> */
+  // }
+  if (activityStore.loadingInitial) return <LoadingComponent content="Loading" />;
 
   return (
     <>
-      <NavBar openForm={handleFormOpen} />
+      <NavBar />
       <Container style={{ marginTop: "7em" }}>
         <ActivityDashboard
-          activities={activities}
-          selectedActivity={selectedActivity}
-          selectActivity={handleSelectActivity}
-          cancelSelectActivity={handleCancelSelectActivity}
-          editMode={editMode}
-          openForm={handleFormOpen}
-          closeForm={handleFormClose}
+          activities={activityStore.activities}
           createOrEdit={handleCreateOrEditActivity}
           deleteActivity={handleDeleteActivity}
           submitting={submitting}
@@ -102,4 +87,4 @@ function App() {
   );
 }
 
-export default App;
+export default observer(App);

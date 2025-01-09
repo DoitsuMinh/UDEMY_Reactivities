@@ -23,7 +23,7 @@ namespace Application.Activities
             }
             public async Task<List<Activity>> Handle(Query request, CancellationToken cancellationToken)
             {
-                return await _context.Activities.Where(x => x.Status == "current").ToListAsync();
+                return await _context.Activities.OrderBy(x => x.Status).ToListAsync();
             }
         }
     }
