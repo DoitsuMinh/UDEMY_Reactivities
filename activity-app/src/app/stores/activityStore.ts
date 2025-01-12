@@ -1,20 +1,30 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 import { Activity } from "../models/activity";
 import agent from "../api/agent";
+import { v4 as uuid } from 'uuid';
 
 export default class ActivityStore {
   title = `Oi oi 🙉`;
 
-  activities: Activity[] = [];
+  activityRegistry = new Map<string, Activity>();
   selectedActivity: Activity | undefined = undefined;
   editMode: boolean = false;
   loading: boolean = false;
   submitting: boolean = false;
 
-  loadingInitial: boolean = false;
+  loadingInitial: boolean = true;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  get activitiesByDate() {
+    return Array.from(this.activityRegistry.values()).sort((a, b) => {
+      if (a.status === b.status) {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      return a.status.localeCompare(b.status);
+    })
   }
 
   setTitle = () => {
@@ -26,13 +36,16 @@ export default class ActivityStore {
   }
 
   loadActivities = async () => {
-
-    this.setLoadingInitial(true);
-
     try {
       const activities = await agent.Activities.list();
 
-      this.setActivities(activities);
+      runInAction(() => {
+        activities.forEach(activity => {
+          activity.date = activity.date.split("T")[0];
+          this.activityRegistry.set(activity.id, activity);
+        });
+      })
+
       this.setLoadingInitial(false);
     } catch (error) {
       console.error(error);
@@ -40,18 +53,9 @@ export default class ActivityStore {
     }
   };
 
-  initializeActivities = () => {
-    this.activities = [];
-  }
-
-  // use arrow function to bind value of parameters in this class
-  // to prevent strict mode warning
-  setActivities = (activities: Activity[]) => {
-    this.activities = activities.map(activity => ({
-      ...activity,
-      date: activity.date.split("T")[0]
-    }));
-  }
+  // initializeActivities = () => {
+  //   this.activities = [];
+  // }
 
   // use arrow function to bind value of parameters in this class
   // to prevent strict mode warning
@@ -59,16 +63,16 @@ export default class ActivityStore {
     this.loadingInitial = state;
   };
 
-  setSubmitting(state: boolean) {
-    this.submitting = state;
-  }
+  // setSubmitting(state: boolean) {
+  //   this.submitting = state;
+  // }
 
-  setLoading(state: boolean) {
-    this.loading = state;
-  }
+  // setLoading(state: boolean) {
+  //   this.loading = state;
+  // }
 
   selectActivity = (id: string) => {
-    this.selectedActivity = this.activities.find((x) => x.id === id) || undefined;
+    this.selectedActivity = this.activityRegistry.get(id);
   };
 
   cancelSelectedActivity = () => {
@@ -84,44 +88,73 @@ export default class ActivityStore {
     this.editMode = false;
   }
 
-  // editActivity = async (activity: Activity) => {
-  //   this.setSubmitting(true);
+  updateActivity = async (activity: Activity) => {
+    this.loading = true;
 
-  //   try {
-  //     await agent.Activities.update(activity);
+    try {
+      await agent.Activities.update(activity);
 
-  //     this.updateActivity(activity);
-  //     this.selectActivity(activity.id);
-  //     this.closeForm();
-  //     this.setSubmitting(false);
-  //   }
-  //   catch (error) {
-  //     console.error(error);
-  //     this.setSubmitting(false);
-  //   }
-  // }
+      runInAction(() => {
+        this.activityRegistry.set(activity.id, activity)
 
-  // updateActivity = (activity: Activity) => {
-  //   this.activities = [...this.activities.filter((x) => x.id !== activity.id), activity];
-  // }
+        this.selectedActivity = activity;
+        this.editMode = false;
+        this.loading = false;
+      })
+    } catch (error) {
+      console.error(error);
 
-  // addActivity = (activity: Activity) => {
-  //   this.activities = [...this.activities, activity];
-  // }
+      runInAction(() => {
+        this.loading = false;
+      })
+    }
+  }
 
-  // createActivity = async (activity: Activity) => {
-  //   this.setSubmitting(true);
+  createActivity = async (activity: Activity) => {
+    this.loading = true;
 
-  //   try {
-  //     await agent.Activities.create(activity);
+    try {
+      activity.id = uuid();
+      await agent.Activities.create(activity);
 
-  //     this.addActivity(activity);
-  //     this.selectActivity(activity.id);
-  //     this.closeForm();
-  //     this.setSubmitting(false);
-  //   } catch (error) {
-  //     console.error(error);
-  //     this.setSubmitting(false);
-  //   }
-  // }
+      runInAction(() => {
+        this.activityRegistry.set(activity.id, activity)
+
+        this.selectedActivity = activity;
+        this.editMode = false;
+        this.loading = false;
+      })
+    } catch (error) {
+      console.log(error);
+
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
+  }
+
+  deleteActivity = async (id: string) => {
+    this.loading = true;
+
+    try {
+      await agent.Activities.delete(id);
+
+      runInAction(() => {
+        const activity = this.activityRegistry.get(id);
+        if (activity) {
+          activity.status = 'removed';
+          this.activityRegistry.set(id, activity)
+        }
+
+
+        this.cancelSelectedActivity;
+        this.loading = false;
+      })
+    } catch (error) {
+      console.error(error);
+      runInAction(() => {
+        this.loading = false;
+      })
+    }
+  }
 }
