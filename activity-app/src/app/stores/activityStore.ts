@@ -4,15 +4,15 @@ import agent from "../api/agent";
 import { v4 as uuid } from 'uuid';
 
 export default class ActivityStore {
-  title = `Oi oi 🙉`;
+  title = `Oi Oi 🙉`;
 
   activityRegistry = new Map<string, Activity>();
-  selectedActivity: Activity | undefined = undefined;
+  selectedActivity?: Activity = undefined;
   editMode: boolean = false;
   loading: boolean = false;
   submitting: boolean = false;
 
-  loadingInitial: boolean = true;
+  loadingInitial: boolean = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -36,57 +36,63 @@ export default class ActivityStore {
   }
 
   loadActivities = async () => {
+    this.setLoadingInitial(true);
+
     try {
       const activities = await agent.Activities.list();
 
       runInAction(() => {
         activities.forEach(activity => {
-          activity.date = activity.date.split("T")[0];
-          this.activityRegistry.set(activity.id, activity);
+          this.setActivity(activity);
         });
       })
 
       this.setLoadingInitial(false);
     } catch (error) {
       console.error(error);
+
       this.setLoadingInitial(false);
     }
   };
 
-  // initializeActivities = () => {
-  //   this.activities = [];
-  // }
+  loadActivity = async (id: string) => {
+    let activity = this.getActivity(id);
+    if (activity) {
+      this.selectedActivity = activity;
+      return activity;
+    }
+    else {
+      this.setLoadingInitial(true);
+
+      try {
+        activity = await agent.Activities.details(id);
+        this.setActivity(activity);
+
+        runInAction(() => { this.selectedActivity = activity; })
+        this.setLoadingInitial(false);
+        return activity;
+      } catch (error) {
+        console.error(error);
+
+        this.setLoadingInitial(false);
+      }
+    }
+  }
+
+  private setActivity = (activity: Activity) => {
+    activity.date = activity.date.split("T")[0];
+    this.activityRegistry.set(activity.id, activity);
+  }
+
+  private getActivity = (id: string) => {
+    return this.activityRegistry.get(id);
+  }
 
   // use arrow function to bind value of parameters in this class
   // to prevent strict mode warning
   setLoadingInitial = (state: boolean) => {
     this.loadingInitial = state;
   };
-
-  // setSubmitting(state: boolean) {
-  //   this.submitting = state;
-  // }
-
-  // setLoading(state: boolean) {
-  //   this.loading = state;
-  // }
-
-  selectActivity = (id: string) => {
-    this.selectedActivity = this.activityRegistry.get(id);
-  };
-
-  cancelSelectedActivity = () => {
-    this.selectedActivity = undefined;
-  };
-
-  openForm = (id?: string) => {
-    id ? this.selectActivity(id) : this.cancelSelectedActivity();
-    this.editMode = true;
-  }
-
-  closeForm = () => {
-    this.editMode = false;
-  }
 
   updateActivity = async (activity: Activity) => {
     this.loading = true;
@@ -146,12 +152,11 @@ export default class ActivityStore {
           this.activityRegistry.set(id, activity)
         }
 
-
-        this.cancelSelectedActivity;
         this.loading = false;
       })
     } catch (error) {
       console.error(error);
+
       runInAction(() => {
         this.loading = false;
       })
