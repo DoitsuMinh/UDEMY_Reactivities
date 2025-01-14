@@ -1,20 +1,10 @@
-import { useEffect } from "react";
 import { Container } from "semantic-ui-react";
 import NavBar from "./NavBar";
-import ActivityDashboard from "../feature/activities/dashboard/ActivityDashboard";
-// import { v4 as uuid } from "uuid";
-import LoadingComponent from "./LoadingComponent";
-import { useStore } from "../stores/store";
 import { observer } from "mobx-react-lite";
+import { Outlet, useLocation } from "react-router";
+import HomePage from "../feature/home/HomePage";
 
 function App() {
-  const { activityStore } = useStore();
-
-  // using StrictMode will cause the app to render twice
-  useEffect(() => {
-    activityStore.loadActivities();
-  }, [activityStore]);
-
   // {
   //   /* <Grid>
   //         <Grid.Column width="10">
@@ -29,14 +19,20 @@ function App() {
   //       </Grid> */
   // }
 
-  if (activityStore.loadingInitial) return <LoadingComponent content="Loading" />;
+  const location = useLocation();
 
   return (
     <>
-      <NavBar />
-      <Container style={{ marginTop: "7em" }}>
-        <ActivityDashboard />
-      </Container>
+      {location.pathname === "/" ? (
+        <HomePage />
+      ) : (
+        <>
+          <NavBar />
+          <Container style={{ marginTop: "7em" }}>
+            <Outlet />
+          </Container>
+        </>
+      )}
     </>
   );
 }
